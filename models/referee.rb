@@ -2,7 +2,8 @@ require_relative ('../db/sql_runner')
 
 class Referee
 
-  attr_reader :id, :name, :country
+  attr_reader :id
+  attr_accessor :name, :country
 
   private
 
@@ -21,6 +22,11 @@ class Referee
       @@referees = []
     rescue
     end
+  end
+
+  def Referee.all
+    @@referees ||= Referee.retrieve_from_db
+    return @@referees
   end
 
   def Referee.find_by_id(id)
@@ -53,10 +59,22 @@ class Referee
       @@referees ||= Referee.retrieve_from_db
       sql = "DELETE FROM referees WHERE id = #{@id}"
       SqlRunner.run(sql)
+      @@referees.delete(Referee.find_by_id(@id))
       @id = nil
-      @@referees.delete(self)
     rescue
       # PSQL will prevent this action if there are references to this entry
+    end
+  end
+
+  def update
+    @@referees ||= Referee.retrieve_from_db
+    sql = "UPDATE referees SET (name, country_id) = ('#{@name}', #{@country.id}) WHERE id = #{@id}"
+    SqlRunner.run(sql)
+    master = Referee.find_by_id(@id)
+    # Update @@referees if self is not on the list
+    if master != self
+      master.name = @name
+      master.country = Country.find_by_id(@country.id)
     end
   end
 

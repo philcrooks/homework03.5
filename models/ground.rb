@@ -2,7 +2,8 @@ require_relative ('../db/sql_runner')
 
 class Ground
 
-  attr_reader :id, :name, :city, :capacity, :country
+  attr_reader :id
+  attr_accessor :name, :city, :capacity, :country
 
   private
 
@@ -21,6 +22,11 @@ class Ground
       @@grounds = []
     rescue
     end
+  end
+
+  def Ground.all
+    @@grounds ||= Ground.retrieve_from_db
+    return @@grounds
   end
 
   def Ground.find_by_id(id)
@@ -55,10 +61,24 @@ class Ground
       @@grounds ||= Ground.retrieve_from_db
       sql = "DELETE FROM grounds WHERE id = #{@id}"
       SqlRunner.run(sql)
+      @@grounds.delete(Ground.find_by_id(@id))
       @id = nil
-      @@grounds.delete(self)
     rescue
       # PSQL will prevent this action if there are references to this entry
+    end
+  end
+
+  def update
+    @@grounds ||= Ground.retrieve_from_db
+    sql = "UPDATE grounds SET (name, city, country_id, capacity) = ('#{@name}', '#{@city}', #{@country.id}, #{capacity}) WHERE id = #{@id}"
+    SqlRunner.run(sql)
+    master = Country.find_by_id(@id)
+    # Update @@grounds if self is not on the list
+    if master != self
+      master.name = @name
+      master.city = @city
+      master.country = Country.find_by_id(@country.id)
+      master.capacity = @capacity
     end
   end
 

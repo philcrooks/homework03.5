@@ -2,7 +2,8 @@ require_relative ('../db/sql_runner')
 
 class Country
 
-  attr_reader :id, :name
+  attr_reader :id
+  attr_accessor :name
 
   private
 
@@ -24,7 +25,7 @@ class Country
   end
 
   def Country.all
-    @@country ||= Country.retrieve_from_db
+    @@countries ||= Country.retrieve_from_db
     return @@countries
   end
 
@@ -40,6 +41,7 @@ class Country
 
   def save
     # This save has no table interdependencies so should succeed
+    # Could be adding a duplicate but will be given a new id
     @@countries ||= Country.retrieve_from_db
     sql = "INSERT INTO countries (name) VALUES ('#{@name}') RETURNING *"
     @id = SqlRunner.run(sql).first['id'].to_i
@@ -52,11 +54,21 @@ class Country
       @@countries ||= retrieve_from_db
       sql = "DELETE FROM countries WHERE id = #{@id}"
       SqlRunner.run(sql)
+      # May be deleting using a copy - use the id to find the original
+      @@countries.delete(Country.find_by_id(@id))
       @id = nil
-      @@countries.delete(self)
     rescue
       # PSQL will prevent this action if there are references to this entry
     end
+  end
+
+  def update
+    @@countries ||= Country.retrieve_from_db
+    sql = "UPDATE countries SET (name) = ('#{@name}') WHERE id = #{@id}"
+    SqlRunner.run(sql)
+    master = Country.find_by_id(@id)
+    # Update @@countries if self is not on the list
+    master.name = @name if master != self
   end
 
   def to_s

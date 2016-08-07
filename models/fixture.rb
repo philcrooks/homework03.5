@@ -5,7 +5,8 @@ require_relative ('team')
 
 class Fixture
 
-  attr_reader :id, :home_team, :away_team, :ground, :referee, :round_no, :home_score, :away_score, :home_try_count, :away_try_count, :attendance
+  attr_reader :id
+  attr_accessor :home_team, :away_team, :ground, :referee, :round_no, :home_score, :away_score, :home_try_count, :away_try_count, :attendance
 
   private
 
@@ -31,9 +32,14 @@ class Fixture
     return @@fixtures
   end
 
+  def Fixture.find_by_id(id)
+    @@fixtures ||= Fixture.retrieve_from_db
+    return @@fixtures.find { | fixture | fixture.id == id }
+  end
+
   def Fixture.in_round(round_no)
     @@fixtures ||= Fixture.retrieve_from_db
-    return @@Fixtures.select { | fixture | fixture.round_no == round_no }
+    return @@fixtures.select { | fixture | fixture.round_no == round_no }
   end
 
   def initialize(options)
@@ -67,12 +73,33 @@ class Fixture
       @@fixtures ||= Fixture.retrieve_from_db
       sql = "DELETE FROM fixtures WHERE id = #{@id}"
       SqlRunner.run(sql)
+      @@fixtures.delete(Fixture.find_by_id(@id))
       @id = nil
-      @@fixtures.delete(self)
     rescue
       # PSQL will prevent this action if there are references to this entry
     end
   end
+
+ def update
+   @@fixtures ||= Fixture.retrieve_from_db
+   sql = "UPDATE fixtures SET (home_team_id, away_team_id, ground_id, referee_id, round_no, home_score, away_score, home_try_count, away_try_count, attendance) = (#{@home_team.id}, #{@away_team.id}, #{@ground.id}, #{@referee.id}, #{@round_no}, #{@home_score}, #{@away_score}, #{@home_try_count}, #{@away_try_count}, #{@attendance}) WHERE id = #{@id}"
+   SqlRunner.run(sql)
+   master = Fixture.find_by_id(@id)
+   # Update @@fixtures if self is not on the list
+   if master != self
+     # Working with a copy so don't trust any of the referenced instances
+     master.home_team = Team.find_by_id(@home_team.id)
+     master.away_team = Team.find_by_id(@away_team.id)
+     master.ground = Ground.find_by_id(@ground.id)
+     master.referee = Referee.find_by_id(@referee.id)
+     master.round_no = @round_no
+     master.home_score = @home_score
+     master.away_score = @away_score
+     master.home_try_count = @home_try_count
+     master.away_try_count = @away_try_count
+     master.attendance = @attendance
+   end
+ end
 
   def to_s
     result  = "%-10s#{@home_team} #{@home_score} v #{@away_score} #{@away_team} (attendance: #{@attendance} / #{(@attendance*100)/@ground.capacity}%%)\n" % ["Round #{@round_no}:"]

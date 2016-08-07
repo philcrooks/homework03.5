@@ -3,7 +3,8 @@ require_relative ('country')
 
 class Team
 
-  attr_reader :id, :name, :city, :country
+  attr_reader :id
+  attr_accessor :name, :city, :country
 
   private
 
@@ -60,10 +61,23 @@ class Team
       @@teams ||= Team.retrieve_from_db
       sql = "DELETE FROM teams WHERE id = #{@id}"
       SqlRunner.run(sql)
+      @@teams.delete(Team.find_by_id(@id))
       @id = nil
-      @@teams.delete(self)
     rescue
       # PSQL will prevent this action if there are references to this entry
+    end
+  end
+
+  def update
+    @@teams ||= Team.retrieve_from_db
+    sql = "UPDATE grounds SET (name, city, country_id, capacity) = ('#{@name}', '#{@city}', #{@country.id}, #{capacity}) WHERE id = #{@id}"
+    SqlRunner.run(sql)
+    master = Team.find_by_id(@id)
+    # Update @@teams if self is not on the list
+    if master != self
+      master.name = @name
+      master.city = @city
+      master.country = Country.find_by_id(@country.id)
     end
   end
 
