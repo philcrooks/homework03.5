@@ -30,8 +30,8 @@ class Referee
   end
 
   def Referee.find_by_id(id)
-    @@refs ||= Referee.retrieve_from_db
-    return @@refs.find { | ref | ref.id == id }
+    @@referees ||= Referee.retrieve_from_db
+    return @@referees.find { | ref | ref.id == id }
   end
 
   def initialize (options)
