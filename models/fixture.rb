@@ -43,6 +43,7 @@ class Fixture
   end
 
   def initialize(options)
+    @@fixtures ||= Fixture.retrieve_from_db
     # @options = options
     @id = options['id'].to_i
     @home_team = Team.find_by_id(options['home_team_id'].to_i)
@@ -59,7 +60,7 @@ class Fixture
 
   def save
     begin
-      @@fixtures ||= Fixture.retrieve_from_db
+      # @@fixtures ||= Fixture.retrieve_from_db
       sql = "INSERT INTO fixtures (home_team_id, away_team_id, ground_id, referee_id, round_no, home_score, away_score, home_try_count, away_try_count, attendance) VALUES (#{@home_team.id}, #{@away_team.id}, #{@ground.id}, #{@referee.id}, #{@round_no}, #{@home_score}, #{@away_score}, #{@home_try_count}, #{@away_try_count}, #{@attendance}) RETURNING *"
       @@fixtures << self
       @id = SqlRunner.run(sql).first['id'].to_i
@@ -72,7 +73,7 @@ class Fixture
 
   def delete
     begin
-      @@fixtures ||= Fixture.retrieve_from_db
+      # @@fixtures ||= Fixture.retrieve_from_db
       sql = "DELETE FROM fixtures WHERE id = #{@id}"
       SqlRunner.run(sql)
       @@fixtures.delete(Fixture.find_by_id(@id))
@@ -85,7 +86,7 @@ class Fixture
 
   def update
     begin
-      @@fixtures ||= Fixture.retrieve_from_db
+      # @@fixtures ||= Fixture.retrieve_from_db
       sql = "UPDATE fixtures SET (home_team_id, away_team_id, ground_id, referee_id, round_no, home_score, away_score, home_try_count, away_try_count, attendance) = (#{@home_team.id}, #{@away_team.id}, #{@ground.id}, #{@referee.id}, #{@round_no}, #{@home_score}, #{@away_score}, #{@home_try_count}, #{@away_try_count}, #{@attendance}) WHERE id = #{@id}"
       SqlRunner.run(sql)
       master = Fixture.find_by_id(@id)

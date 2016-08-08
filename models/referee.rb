@@ -35,6 +35,7 @@ class Referee
   end
 
   def initialize (options)
+    @@referees ||= Referee.retrieve_from_db
     # @options = options
     @id = options['id'].to_i
     @name = options['name']
@@ -45,7 +46,7 @@ class Referee
 
   def save ()
     begin
-      @@referees ||= Referee.retrieve_from_db
+      # @@referees ||= Referee.retrieve_from_db
       sql = "INSERT INTO referees (name, country_id) VALUES ('#{@name}', #{@country.id}) RETURNING *"
       @id = SqlRunner.run(sql).first['id'].to_i
       @@referees << self
@@ -57,7 +58,7 @@ class Referee
 
   def delete
     begin
-      @@referees ||= Referee.retrieve_from_db
+      # @@referees ||= Referee.retrieve_from_db
       sql = "DELETE FROM referees WHERE id = #{@id}"
       SqlRunner.run(sql)
       @@referees.delete(Referee.find_by_id(@id))
@@ -70,7 +71,7 @@ class Referee
 
   def update
     begin
-      @@referees ||= Referee.retrieve_from_db
+      # @@referees ||= Referee.retrieve_from_db
       sql = "UPDATE referees SET (name, country_id) = ('#{@name}', #{@country.id}) WHERE id = #{@id}"
       SqlRunner.run(sql)
       master = Referee.find_by_id(@id)

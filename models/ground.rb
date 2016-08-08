@@ -35,6 +35,7 @@ class Ground
   end
 
   def initialize (options)
+    @@grounds ||= Ground.retrieve_from_db
     # @options = options
     @id = options['id'].to_i
     @name = options['name']
@@ -47,7 +48,7 @@ class Ground
 
   def save()
     begin
-      @@grounds ||= Ground.retrieve_from_db
+      # @@grounds ||= Ground.retrieve_from_db
       sql = "INSERT INTO grounds (name, city, country_id, capacity) VALUES ('#{@name}', '#{@city}', #{@country.id}, #{@capacity}) RETURNING *"
       @id = SqlRunner.run(sql).first['id'].to_i
       @@grounds << self
@@ -59,7 +60,7 @@ class Ground
 
   def delete
     begin
-      @@grounds ||= Ground.retrieve_from_db
+      # @@grounds ||= Ground.retrieve_from_db
       sql = "DELETE FROM grounds WHERE id = #{@id}"
       SqlRunner.run(sql)
       @@grounds.delete(Ground.find_by_id(@id))
@@ -73,7 +74,7 @@ class Ground
 
   def update
     begin
-      @@grounds ||= Ground.retrieve_from_db
+      # @@grounds ||= Ground.retrieve_from_db
       sql = "UPDATE grounds SET (name, city, country_id, capacity) = ('#{@name}', '#{@city}', #{@country.id}, #{capacity}) WHERE id = #{@id}"
       SqlRunner.run(sql)
       master = Country.find_by_id(@id)

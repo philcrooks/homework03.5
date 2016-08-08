@@ -36,6 +36,7 @@ class Team
   end
 
   def initialize (options)
+    @@teams ||= Team.retrieve_from_db
     # @options = options
     @id = options['id'].to_i
     @name = options['name']
@@ -47,7 +48,7 @@ class Team
 
   def save ()
     begin
-      @@teams ||= Team.retrieve_from_db
+      # @@teams ||= Team.retrieve_from_db
       sql = "INSERT INTO teams (name, city, country_id) VALUES ('#{@name}', '#{@city}', #{@country.id}) RETURNING *"
       @id = SqlRunner.run(sql).first['id'].to_i
       @@teams << self
@@ -59,7 +60,7 @@ class Team
 
   def delete
     begin
-      @@teams ||= Team.retrieve_from_db
+      # @@teams ||= Team.retrieve_from_db
       sql = "DELETE FROM teams WHERE id = #{@id}"
       SqlRunner.run(sql)
       @@teams.delete(Team.find_by_id(@id))
@@ -72,7 +73,7 @@ class Team
 
   def update
     begin
-      @@teams ||= Team.retrieve_from_db
+      # @@teams ||= Team.retrieve_from_db
       sql = "UPDATE teams SET (name, city, country_id) = ('#{@name}', '#{@city}', #{@country.id}) WHERE id = #{@id}"
       SqlRunner.run(sql)
       master = Team.find_by_id(@id)

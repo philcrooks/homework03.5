@@ -35,6 +35,7 @@ class Country
   end
 
   def initialize (options)
+    @@countries ||= retrieve_from_db
     @id = options['id'].to_i
     @name = options['name']
   end
@@ -42,7 +43,7 @@ class Country
   def save
     # This save has no table interdependencies so should succeed
     # Could be adding a duplicate but will be given a new id
-    @@countries ||= Country.retrieve_from_db
+    # @@countries ||= Country.retrieve_from_db
     sql = "INSERT INTO countries (name) VALUES ('#{@name}') RETURNING *"
     @id = SqlRunner.run(sql).first['id'].to_i
     @@countries << self
@@ -51,7 +52,7 @@ class Country
 
   def delete
     begin
-      @@countries ||= retrieve_from_db
+      # @@countries ||= retrieve_from_db
       # PSQL will prevent this action if there are references to this entry
       sql = "DELETE FROM countries WHERE id = #{@id}"
       SqlRunner.run(sql)
@@ -65,7 +66,7 @@ class Country
 
   def update
     begin
-      @@countries ||= Country.retrieve_from_db
+      # @@countries ||= Country.retrieve_from_db
       # This will fail of the object has been deleted from the database
       sql = "UPDATE countries SET (name) = ('#{@name}') WHERE id = #{@id}"
       SqlRunner.run(sql)
