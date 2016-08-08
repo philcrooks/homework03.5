@@ -50,6 +50,7 @@ class Referee
       @id = SqlRunner.run(sql).first['id'].to_i
       @@referees << self
     rescue
+      puts "Referee.save failed on object %x" % [object_id * 2]
     end
     return @id
   end
@@ -63,18 +64,23 @@ class Referee
       @id = nil
     rescue
       # PSQL will prevent this action if there are references to this entry
+      puts "Referee.delete failed on object %x" % [object_id * 2]
     end
   end
 
   def update
-    @@referees ||= Referee.retrieve_from_db
-    sql = "UPDATE referees SET (name, country_id) = ('#{@name}', #{@country.id}) WHERE id = #{@id}"
-    SqlRunner.run(sql)
-    master = Referee.find_by_id(@id)
-    # Update @@referees if self is not on the list
-    if master != self
-      master.name = @name
-      master.country = Country.find_by_id(@country.id)
+    begin
+      @@referees ||= Referee.retrieve_from_db
+      sql = "UPDATE referees SET (name, country_id) = ('#{@name}', #{@country.id}) WHERE id = #{@id}"
+      SqlRunner.run(sql)
+      master = Referee.find_by_id(@id)
+      # Update @@referees if self is not on the list
+      if master != self
+        master.name = @name
+        master.country = Country.find_by_id(@country.id)
+      end
+    rescue
+      puts "Referee.update failed on object %x" % [object_id * 2]
     end
   end
 

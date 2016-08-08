@@ -52,23 +52,29 @@ class Country
   def delete
     begin
       @@countries ||= retrieve_from_db
+      # PSQL will prevent this action if there are references to this entry
       sql = "DELETE FROM countries WHERE id = #{@id}"
       SqlRunner.run(sql)
       # May be deleting using a copy - use the id to find the original
       @@countries.delete(Country.find_by_id(@id))
       @id = nil
     rescue
-      # PSQL will prevent this action if there are references to this entry
+      puts "Country.delete failed on object %x" % [object_id * 2]
     end
   end
 
   def update
-    @@countries ||= Country.retrieve_from_db
-    sql = "UPDATE countries SET (name) = ('#{@name}') WHERE id = #{@id}"
-    SqlRunner.run(sql)
-    master = Country.find_by_id(@id)
-    # Update @@countries if self is not on the list
-    master.name = @name if master != self
+    begin
+      @@countries ||= Country.retrieve_from_db
+      # This will fail of the object has been deleted from the database
+      sql = "UPDATE countries SET (name) = ('#{@name}') WHERE id = #{@id}"
+      SqlRunner.run(sql)
+      master = Country.find_by_id(@id)
+      # Update @@countries if self is not on the list
+      master.name = @name if master != self
+    rescue
+      puts "Country.update failed on object %x" % [object_id * 2]
+    end
   end
 
   def to_s

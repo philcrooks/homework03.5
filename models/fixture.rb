@@ -64,6 +64,8 @@ class Fixture
       @@fixtures << self
       @id = SqlRunner.run(sql).first['id'].to_i
     rescue
+      # Will fail if there are unsatisfied dependencies
+      puts "Fixture.save failed on object %x" % [object_id * 2]
     end
     return @id
   end
@@ -77,28 +79,33 @@ class Fixture
       @id = nil
     rescue
       # PSQL will prevent this action if there are references to this entry
+      puts "Fixture.delete failed on object %x" % [object_id * 2]
     end
   end
 
- def update
-   @@fixtures ||= Fixture.retrieve_from_db
-   sql = "UPDATE fixtures SET (home_team_id, away_team_id, ground_id, referee_id, round_no, home_score, away_score, home_try_count, away_try_count, attendance) = (#{@home_team.id}, #{@away_team.id}, #{@ground.id}, #{@referee.id}, #{@round_no}, #{@home_score}, #{@away_score}, #{@home_try_count}, #{@away_try_count}, #{@attendance}) WHERE id = #{@id}"
-   SqlRunner.run(sql)
-   master = Fixture.find_by_id(@id)
-   # Update @@fixtures if self is not on the list
-   if master != self
-     # Working with a copy so don't trust any of the referenced instances
-     master.home_team = Team.find_by_id(@home_team.id)
-     master.away_team = Team.find_by_id(@away_team.id)
-     master.ground = Ground.find_by_id(@ground.id)
-     master.referee = Referee.find_by_id(@referee.id)
-     master.round_no = @round_no
-     master.home_score = @home_score
-     master.away_score = @away_score
-     master.home_try_count = @home_try_count
-     master.away_try_count = @away_try_count
-     master.attendance = @attendance
-   end
+  def update
+    begin
+      @@fixtures ||= Fixture.retrieve_from_db
+      sql = "UPDATE fixtures SET (home_team_id, away_team_id, ground_id, referee_id, round_no, home_score, away_score, home_try_count, away_try_count, attendance) = (#{@home_team.id}, #{@away_team.id}, #{@ground.id}, #{@referee.id}, #{@round_no}, #{@home_score}, #{@away_score}, #{@home_try_count}, #{@away_try_count}, #{@attendance}) WHERE id = #{@id}"
+      SqlRunner.run(sql)
+      master = Fixture.find_by_id(@id)
+      # Update @@fixtures if self is not on the list
+      if master != self
+        # Working with a copy so don't trust any of the referenced instances
+        master.home_team = Team.find_by_id(@home_team.id)
+        master.away_team = Team.find_by_id(@away_team.id)
+        master.ground = Ground.find_by_id(@ground.id)
+        master.referee = Referee.find_by_id(@referee.id)
+        master.round_no = @round_no
+        master.home_score = @home_score
+        master.away_score = @away_score
+        master.home_try_count = @home_try_count
+        master.away_try_count = @away_try_count
+        master.attendance = @attendance
+      end
+    rescue
+      puts "Fixture.update failed on object %x" % [object_id * 2]
+    end
  end
 
   def to_s

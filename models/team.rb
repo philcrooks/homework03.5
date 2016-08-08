@@ -52,6 +52,7 @@ class Team
       @id = SqlRunner.run(sql).first['id'].to_i
       @@teams << self
     rescue
+      puts "Team.save failed on object %x" % [object_id * 2]
     end
     return @id
   end
@@ -65,19 +66,24 @@ class Team
       @id = nil
     rescue
       # PSQL will prevent this action if there are references to this entry
+      puts "Team.delete failed on object %x" % [object_id * 2]
     end
   end
 
   def update
-    @@teams ||= Team.retrieve_from_db
-    sql = "UPDATE grounds SET (name, city, country_id, capacity) = ('#{@name}', '#{@city}', #{@country.id}, #{capacity}) WHERE id = #{@id}"
-    SqlRunner.run(sql)
-    master = Team.find_by_id(@id)
-    # Update @@teams if self is not on the list
-    if master != self
-      master.name = @name
-      master.city = @city
-      master.country = Country.find_by_id(@country.id)
+    begin
+      @@teams ||= Team.retrieve_from_db
+      sql = "UPDATE grounds SET (name, city, country_id, capacity) = ('#{@name}', '#{@city}', #{@country.id}, #{capacity}) WHERE id = #{@id}"
+      SqlRunner.run(sql)
+      master = Team.find_by_id(@id)
+      # Update @@teams if self is not on the list
+      if master != self
+        master.name = @name
+        master.city = @city
+        master.country = Country.find_by_id(@country.id)
+      end
+    rescue
+      puts "Team.update failed on object %x" % [object_id * 2]
     end
   end
 
