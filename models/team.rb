@@ -73,7 +73,7 @@ class Team
   def update
     begin
       @@teams ||= Team.retrieve_from_db
-      sql = "UPDATE grounds SET (name, city, country_id, capacity) = ('#{@name}', '#{@city}', #{@country.id}, #{capacity}) WHERE id = #{@id}"
+      sql = "UPDATE teams SET (name, city, country_id) = ('#{@name}', '#{@city}', #{@country.id}) WHERE id = #{@id}"
       SqlRunner.run(sql)
       master = Team.find_by_id(@id)
       # Update @@teams if self is not on the list
